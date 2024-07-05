@@ -15,7 +15,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(),[
             'name' => 'required',
             'email' => 'required',
-            'password' => 'required'
+            'password' => 'required',
         ]);
         if ($validator->passes()) {
             $user = new User;
@@ -23,12 +23,13 @@ class AuthController extends Controller
             $user->email = $request->email;
             $user->password = Hash::make($request->password);
             $user->save();
+
             return response()->json([
                 'status' => true,
-                'message' => 'User Save Successfully',
-                'errors' => $user
+                'User' => $user,
+                'message' => 'User Create SuccessFully'
             ]);
-        }else{
+        }else {
             return response()->json([
                 'status' => false,
                 'errors' => $validator->errors()
@@ -36,43 +37,41 @@ class AuthController extends Controller
         }
     }
     public function login(Request $request) {
-        $validator = Validator::make($request->all(),[
-            'email' => 'required|email',
-            'password' => 'required'
+        $validation = Validator::make($request->all(),[
+            'email' => 'required',
+            'password' => 'required',
         ]);
-    
-        if ($validator->fails()) {
+        if ($validation->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Authentication failed',
-                'errors' => $validator->errors()
-            ], 404);
+                'error' => $validation->errors(),
+                'message' => 'validation error'
+            ]);
         }
-    
-        if (auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            $authuser = Auth::user();
-    
-            return response()->json([
+        if (auth::attempt(['email' => $request->email,'password' => $request->password])) {
+           $user = auth::user();
+
+           return response()->json([
                 'status' => true,
-                'message' => "User logged in successfully",
-                'token' => $authuser->createToken("api token")->plainTextToken,
+                'message' => 'User log in successfully',
+                'token' => $user->createToken('API TOKEN')->plainTextToken,
                 'token_type' => 'bearer'
-            ], 200);
-        } else {
+           ],200);
+        }else {
             return response()->json([
                 'status' => false,
-                'message' => "Email and Password do not match",
-                'token_type' => 'bearer'
-            ], 401);
+                'message' => 'Email Or Password is Incorrenct'
+            ],401);
         }
     }
     public function logout(Request $request) {
-     $user = $request->user();
-     $user->tokens()->delete();
-     return response()->json([
-        'status' => true,
-        'message' => 'User log Out Sucessfully',
-        'errors' => $user
-     ]);
+        $user = $request->user();
+        $user->tokens()->delete();
+
+        return response()->json([
+            'status' =>  true,
+            'message' => 'User Delete SuccessFully',
+            'errors' => $user
+        ]);
     }
 }
